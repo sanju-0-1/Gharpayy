@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { NotificationCenter } from "./NotificationCenter";
 import { ProfileMenu } from "./ProfileMenu";
+import { ClientOnly } from "@/components/ClientOnly";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -294,105 +295,107 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <PictureInPictureProvider>
       <PipRouteSyncBridge />
-      <div className="min-h-screen flex w-full bg-background text-foreground">
+      <div className="min-h-screen flex w-full bg-background text-foreground" suppressHydrationWarning>
       {/* Sidebar */}
-      <aside className="hidden md:flex w-[240px] flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border sticky top-0 h-screen">
-        <div className="px-5 py-5 flex items-center gap-2 border-b border-sidebar-border">
-          <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center">
-            <Building2 className="h-4 w-4 text-accent-foreground" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-sidebar-accent-foreground font-display font-semibold text-sm">Gharpayy</div>
-            <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground">Arena Infrastructure</div>
-          </div>
-        </div>
-
-        {(() => {
-          const roleMeta = {
-            "flow-ops": { label: "Flow Ops", dot: "bg-info" },
-            tcm: { label: "TCM Desk", dot: "bg-accent" },
-            hr: { label: "HR / Leadership", dot: "bg-success" },
-            owner: { label: "Owner Portal", dot: "bg-warning" },
-          } as const;
-          const meta = roleMeta[role];
-          const userName = role === "tcm" ? tcms.find((t) => t.id === currentTcmId)?.name : null;
-          return (
-            <div className="px-5 pt-4 pb-2">
-              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-sidebar-foreground/70 font-semibold">
-                <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
-                <span>{meta.label}</span>
-                {userName && <span className="text-sidebar-foreground/50 normal-case tracking-normal">· {userName.split(" ")[0]} {userName.split(" ")[1]?.[0] ?? ""}.</span>}
-              </div>
+      <ClientOnly>
+        <aside className="hidden md:flex w-[240px] flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border sticky top-0 h-screen">
+          <div className="px-5 py-5 flex items-center gap-2 border-b border-sidebar-border">
+            <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center">
+              <Building2 className="h-4 w-4 text-accent-foreground" />
             </div>
-          );
-        })()}
-
-        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto scrollbar-thin">
-          {items.map((it) => {
-            const Icon = it.icon;
-            const active = isActive(it.to);
-            return (
-              <Link
-                key={`${it.to}-${it.label}`}
-                to={it.to}
-                className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                  it.accent && !active && "text-accent",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{it.label}</span>
-                {it.badge !== undefined && it.badge > 0 && mounted && (
-                  <span className={cn(
-                    "ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-mono",
-                    it.accent
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-destructive text-destructive-foreground",
-                  )}>
-                    {it.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-3 border-t border-sidebar-border space-y-2">
-          <div className="text-[10px] text-sidebar-foreground/70 flex items-center justify-between px-1">
-            <span>Quick jump</span>
-            <kbd className="inline-flex items-center gap-0.5 rounded border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 font-mono text-sidebar-accent-foreground">
-              <Command className="h-2.5 w-2.5" />K
-            </kbd>
+            <div className="leading-tight">
+              <div className="text-sidebar-accent-foreground font-display font-semibold text-sm">Gharpayy</div>
+              <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground">Arena Infrastructure</div>
+            </div>
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground px-1">View as</div>
-          <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
-            <SelectTrigger className="bg-sidebar-accent border-sidebar-border text-sidebar-accent-foreground h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="flow-ops">Flow Ops</SelectItem>
-              <SelectItem value="tcm">TCM</SelectItem>
-              <SelectItem value="hr">HR / Leadership</SelectItem>
-              <SelectItem value="owner">Property Owner</SelectItem>
-            </SelectContent>
-          </Select>
-          {role === "tcm" && (
-            <Select value={currentTcmId} onValueChange={setCurrentTcmId}>
+
+          {(() => {
+            const roleMeta = {
+              "flow-ops": { label: "Flow Ops", dot: "bg-info" },
+              tcm: { label: "TCM Desk", dot: "bg-accent" },
+              hr: { label: "HR / Leadership", dot: "bg-success" },
+              owner: { label: "Owner Portal", dot: "bg-warning" },
+            } as const;
+            const meta = roleMeta[role];
+            const userName = role === "tcm" ? tcms.find((t) => t.id === currentTcmId)?.name : null;
+            return (
+              <div className="px-5 pt-4 pb-2">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-sidebar-foreground/70 font-semibold">
+                  <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
+                  <span>{meta.label}</span>
+                  {userName && <span className="text-sidebar-foreground/50 normal-case tracking-normal">· {userName.split(" ")[0]} {userName.split(" ")[1]?.[0] ?? ""}.</span>}
+                </div>
+              </div>
+            );
+          })()}
+
+          <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto scrollbar-thin">
+            {items.map((it) => {
+              const Icon = it.icon;
+              const active = isActive(it.to);
+              return (
+                <Link
+                  key={`${it.to}-${it.label}`}
+                  to={it.to}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors",
+                    active
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                    it.accent && !active && "text-accent",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{it.label}</span>
+                  {it.badge !== undefined && it.badge > 0 && mounted && (
+                    <span className={cn(
+                      "ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-mono",
+                      it.accent
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-destructive text-destructive-foreground",
+                    )}>
+                      {it.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="p-3 border-t border-sidebar-border space-y-2">
+            <div className="text-[10px] text-sidebar-foreground/70 flex items-center justify-between px-1">
+              <span>Quick jump</span>
+              <kbd className="inline-flex items-center gap-0.5 rounded border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 font-mono text-sidebar-accent-foreground">
+                <Command className="h-2.5 w-2.5" />K
+              </kbd>
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground px-1">View as</div>
+            <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
               <SelectTrigger className="bg-sidebar-accent border-sidebar-border text-sidebar-accent-foreground h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {tcms.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                ))}
+                <SelectItem value="flow-ops">Flow Ops</SelectItem>
+                <SelectItem value="tcm">TCM</SelectItem>
+                <SelectItem value="hr">HR / Leadership</SelectItem>
+                <SelectItem value="owner">Property Owner</SelectItem>
               </SelectContent>
             </Select>
-          )}
-        </div>
-      </aside>
+            {role === "tcm" && (
+              <Select value={currentTcmId} onValueChange={setCurrentTcmId}>
+                <SelectTrigger className="bg-sidebar-accent border-sidebar-border text-sidebar-accent-foreground h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {tcms.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </aside>
+      </ClientOnly>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">

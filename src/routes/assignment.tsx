@@ -118,7 +118,7 @@ const timeline = [
 
 export default function AssignmentPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" suppressHydrationWarning>
       <div className="mx-auto max-w-4xl px-5 py-10 space-y-12">
         <header className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">

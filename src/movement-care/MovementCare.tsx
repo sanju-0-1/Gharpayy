@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle, CheckCircle2, ClipboardCopy, Clock3, Flag, Goal,
-  Building2, Hand, MessageCircle, Phone, PhoneCall, PhoneOff, PlayCircle, PlusCircle, ShieldCheck, Timer,
+  Building2, Hand, MessageCircle, Phone, PhoneCall, PhoneOff, PlayCircle, PlusCircle, ShieldCheck, Target, Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -367,26 +367,55 @@ export function MovementCare() {
           </Button>
         </div>
 
-        {commitment && (
-          <div className="mt-2 grid grid-cols-[minmax(180px,1fr)_repeat(6,minmax(70px,auto))] gap-1.5 overflow-x-auto">
-            <div className="min-w-[180px] rounded-md border bg-background px-2 py-1.5">
-              <div className="flex items-center justify-between gap-2 text-[10px] font-semibold">
-                <span>MY RESULT · {activeGoal}</span><span>{actual}/{commitment.commitCount}</span>
+        {commitment && (() => {
+          const remainingNeeded = Math.max(0, commitment.commitCount - actual);
+          const isTargetMet = actual >= commitment.commitCount;
+          return (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 overflow-x-auto">
+              <div className="min-w-[220px] flex-1 rounded-md border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-3 py-1.5 shadow-xs">
+                <div className="flex items-center justify-between gap-2 text-[10px] font-bold">
+                  <span className="flex items-center gap-1 uppercase tracking-wider text-primary">
+                    <Target className="h-3.5 w-3.5" /> MY TARGET · {activeGoal}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[9px] font-bold px-1.5 py-0.2",
+                      isTargetMet
+                        ? "border-success/50 bg-success/15 text-success"
+                        : "border-warning/50 bg-warning/15 text-warning-foreground font-semibold"
+                    )}
+                  >
+                    {isTargetMet ? "✓ TARGET ACHIEVED" : `${remainingNeeded} REMAINING`}
+                  </Badge>
+                </div>
+                <div className="mt-1 flex items-baseline justify-between">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-black tracking-tight">{actual}</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground">
+                      / {commitment.commitCount} {stage.unit}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold text-foreground">
+                    {isTargetMet ? "100% Done" : `${remainingNeeded} left to close`}
+                  </span>
+                </div>
+                <Progress value={progress} className="mt-1.5 h-1.5" />
               </div>
-              <Progress value={progress} className="mt-1 h-1.5" />
+
+              <Stat label="Calls" value={calls.dialled} />
+              <Stat label="Connected" value={calls.connected} />
+              <Stat label="Connect %" value={calls.rate} />
+              <Stat label="Drafted" value={total.drafted} />
+              <Stat label="Definitely close" value={total.goodLeads} />
+              <Stat label="Tours set" value={total.toursScheduled} />
+              <Stat label="Tours done" value={total.toursDone} />
+              <Stat label="Bookings" value={total.booked} />
+              <Stat label="Wrap-ups sent" value={todaysDebriefs.filter((item) => item.sentOnWhatsapp).length} />
+              <Stat label="At risk" value={total.breached + total.p0} danger={total.breached + total.p0 > 0} />
             </div>
-            <Stat label="Calls" value={calls.dialled} />
-            <Stat label="Connected" value={calls.connected} />
-            <Stat label="Connect %" value={calls.rate} />
-            <Stat label="Drafted" value={total.drafted} />
-            <Stat label="Definitely close" value={total.goodLeads} />
-            <Stat label="Tours set" value={total.toursScheduled} />
-            <Stat label="Tours done" value={total.toursDone} />
-            <Stat label="Bookings" value={total.booked} />
-            <Stat label="Wrap-ups sent" value={todaysDebriefs.filter((item) => item.sentOnWhatsapp).length} />
-            <Stat label="At risk" value={total.breached + total.p0} danger={total.breached + total.p0 > 0} />
-          </div>
-        )}
+          );
+        })()}
       </header>
 
       {!commitment ? (

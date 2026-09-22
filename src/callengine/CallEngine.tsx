@@ -2,6 +2,7 @@
 // The operator never types a message and never decides the next step alone.
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CheckSquare, Clock, FileText, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -479,6 +480,8 @@ export function CallEngine({ lead, onLogged }: Props) {
             <span className="text-[11px] text-muted-foreground">{def.label} · {outcome}</span>
           </div>
 
+          <CompactCallSummary cap={cap} outcome={outcome} startedAt={startedAt} />
+
           <div className="space-y-1.5">
             <Title>1 · Send now</Title>
             {outputs.mediaHint && <div className="text-[10px] text-muted-foreground">{outputs.mediaHint}</div>}
@@ -494,11 +497,46 @@ export function CallEngine({ lead, onLogged }: Props) {
             <Textarea rows={4} className="text-xs" value={followText} onChange={(e) => setFollowText(e.target.value)} />
           </div>
 
-          <div className="rounded-md border p-2">
-            <Title>3 · Next step</Title>
-            <div className="text-xs font-medium">{outputs.nextStep.label}</div>
-            <div className="text-[11px] text-muted-foreground">
-              Due {new Date(outputs.nextStep.dueAt).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} · Owner {mv.actor.name}
+          <div className="rounded-lg border border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3 space-y-2.5 shadow-sm">
+            <div className="flex items-center justify-between gap-2 border-b border-primary/20 pb-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                <CheckSquare className="h-4 w-4" />
+                <span>3 · Next Step & Accountability</span>
+              </div>
+              <Badge variant="default" className="text-[10px] font-semibold">
+                {NEXT_ACTION_LABEL[outputs.nextStep.kind] ?? outputs.nextStep.kind}
+              </Badge>
+            </div>
+
+            <div className="text-xs font-bold text-foreground leading-snug">
+              {outputs.nextStep.label}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/80 p-2 text-[11px]">
+                <Clock className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <span className="block text-[9px] uppercase font-semibold text-muted-foreground">Deadline</span>
+                  <span className="font-bold text-foreground truncate block">
+                    {new Date(outputs.nextStep.dueAt).toLocaleString([], {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/80 p-2 text-[11px]">
+                <UserCheck className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <span className="block text-[9px] uppercase font-semibold text-muted-foreground">Accountable Owner</span>
+                  <span className="font-bold text-foreground truncate block">
+                    {mv.actor.name || "Assigned Operator"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -613,4 +651,94 @@ const fmtDate = (iso?: string | null) => (iso ? new Date(iso).toISOString().slic
 
 function blankPrice(c: CallCapture) {
   return c.price ?? { propertyName: "", roomType: "", listed: null, quoted: 0, deposit: null, maintenance: null, validity: "" };
+}
+
+function CompactCallSummary({
+  cap,
+  outcome,
+  startedAt,
+}: {
+  cap: CallCapture;
+  outcome: OutcomeKind;
+  startedAt: number | null;
+}) {
+  const durationSec = startedAt ? Math.round((Date.now() - startedAt) / 1000) : null;
+  const facts: { label: string; value: string }[] = [];
+
+  if (cap.moveIn) {
+    facts.push({
+      label: "Move-in",
+      value: new Date(cap.moveIn).toLocaleDateString([], { month: "short", day: "numeric" }),
+    });
+  }
+  if (cap.area) facts.push({ label: "Area", value: cap.area });
+  if (cap.officeOrCollege) facts.push({ label: "Office/College", value: cap.officeOrCollege });
+  if (cap.budget) facts.push({ label: "Budget", value: `₹${cap.budget.toLocaleString("en-IN")}` });
+  if (cap.roomType) facts.push({ label: "Room", value: cap.roomType });
+  if (cap.inBangalore !== undefined && cap.inBangalore !== null) {
+    facts.push({ label: "In BLR", value: cap.inBangalore ? "Yes" : "No" });
+  }
+  if (cap.forWhom) facts.push({ label: "For", value: cap.forWhom });
+  if (cap.propertyName) facts.push({ label: "Property", value: cap.propertyName });
+  if (cap.price?.quoted) facts.push({ label: "Quoted", value: `₹${cap.price.quoted.toLocaleString("en-IN")}` });
+  if (cap.tourAt) {
+    facts.push({
+      label: "Tour Date",
+      value: new Date(cap.tourAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+    });
+  }
+  if (cap.reaction) facts.push({ label: "Reaction", value: cap.reaction });
+  if (cap.priceReaction) facts.push({ label: "Price Reaction", value: cap.priceReaction });
+
+  return (
+    <div className="space-y-1.5 rounded-lg border border-border bg-muted/40 p-2.5 shadow-xs">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <FileText className="h-3.5 w-3.5 text-primary" />
+          <span>Call Summary & Captured Facts</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Badge variant="outline" className="text-[9px] uppercase font-semibold">
+            {outcome}
+          </Badge>
+          {durationSec !== null && (
+            <Badge variant="secondary" className="text-[9px]">
+              {durationSec}s
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {facts.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {facts.map((f) => (
+            <Badge key={f.label} variant="secondary" className="text-[10px] font-normal border bg-background">
+              <span className="text-muted-foreground mr-1 font-semibold">{f.label}:</span>
+              <span className="font-semibold text-foreground">{f.value}</span>
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <div className="text-[11px] text-muted-foreground italic">No specific facts captured on this call.</div>
+      )}
+
+      {cap.activities.length > 0 && (
+        <div className="text-[10px] text-muted-foreground">
+          <span className="font-semibold text-foreground">Activities:</span> {cap.activities.join(" · ")}
+        </div>
+      )}
+
+      {cap.promises.length > 0 && (
+        <div className="text-[10px] text-muted-foreground">
+          <span className="font-semibold text-primary">Promises:</span> {cap.promises.join(" · ")}
+        </div>
+      )}
+
+      {cap.note && (
+        <div className="text-[10px] text-muted-foreground bg-background rounded p-1 border italic">
+          "{cap.note}"
+        </div>
+      )}
+    </div>
+  );
 }

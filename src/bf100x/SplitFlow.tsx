@@ -2,7 +2,7 @@
 // other 60%. One screen, nothing to scroll except the questions themselves.
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, ArrowLeft, ArrowRight, BellRing, ListChecks, Menu, PhoneCall, ShieldAlert, UserCheck } from "lucide-react";
+import { Activity, ArrowLeft, ArrowRight, BellRing, ListChecks, Menu, PhoneCall, ShieldAlert, UserCheck, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,6 +101,11 @@ export function SplitFlow({ embedded = false, focus, panelOnly = false }: { embe
   const [activityOpen, setActivityOpen] = useState(false);
   const [activityType, setActivityType] = useState("Call completed");
   const [activityNote, setActivityNote] = useState("");
+  const [showSaved, setShowSaved] = useState(false);
+  const triggerSaved = () => {
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 2500);
+  };
   useEffect(() => setMounted(true), []);
 
   // the queue: everyone who still needs a decision, worst first
@@ -239,14 +244,32 @@ export function SplitFlow({ embedded = false, focus, panelOnly = false }: { embe
             </div>
           </div>
           {mounted && h && (
-            <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
-              <Badge variant="outline" className="text-[10px]">{h.stepNo}. {h.complete ? "Checked in" : h.step?.title}</Badge>
-              <Badge variant={lead.owner ? "secondary" : "destructive"} className="text-[10px]">{lead.owner ?? "no owner"}</Badge>
-              <Badge variant="outline" className="text-[10px]">waiting on {h.waitingOn}</Badge>
-              <Badge variant={lead.nextAction ? "outline" : "destructive"} className="text-[10px]">{lead.nextAction ?? "no next step"}</Badge>
-              <Badge variant={lead.nextActionAt && h.sla !== "LATE" ? "outline" : "destructive"} className="text-[10px]">
-                {lead.nextActionAt ? (h.sla === "LATE" ? `late ${fmtMins(h.minutesLate)}` : new Date(lead.nextActionAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })) : "no deadline"}
-              </Badge>
+            <div className={cn("mt-2 flex flex-col gap-1.5 rounded-md border p-2 transition-colors duration-500", showSaved ? "border-green-500/50 bg-green-500/10" : "border-primary/20 bg-primary/5")}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className={cn("text-[10px] font-semibold uppercase tracking-wider", showSaved ? "text-green-600 dark:text-green-400" : "text-primary")}>
+                    Current Customer State
+                  </span>
+                  {showSaved && <span className="flex items-center text-[10px] font-medium text-green-600 dark:text-green-400"><CheckCircle className="mr-1 h-3 w-3" /> Saved</span>}
+                </div>
+                <Badge variant={lead.owner ? "secondary" : "destructive"} className="text-[9px]">{lead.owner ?? "No owner"}</Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="rounded border bg-background p-1.5">
+                  <span className="mb-0.5 block text-[9px] text-muted-foreground">Next Action</span>
+                  <span className={cn("font-medium", !lead.nextAction && "text-destructive")}>{lead.nextAction ?? "Missing next step"}</span>
+                </div>
+                <div className="rounded border bg-background p-1.5">
+                  <span className="mb-0.5 block text-[9px] text-muted-foreground">Deadline</span>
+                  <span className={cn("font-medium", (!lead.nextActionAt || h.sla === "LATE") && "text-destructive")}>
+                    {lead.nextActionAt ? (h.sla === "LATE" ? `Late by ${fmtMins(h.minutesLate)}` : new Date(lead.nextActionAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })) : "No deadline"}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-0.5 flex items-center gap-1">
+                 <Badge variant="outline" className="text-[9px]">{h.stepNo}. {h.complete ? "Checked in" : h.step?.title}</Badge>
+                 <Badge variant="outline" className="text-[9px]">waiting on {h.waitingOn}</Badge>
+              </div>
             </div>
           )}
           {/* Copy the number, dial it, or open the WhatsApp chat — always labelled */}
@@ -260,6 +283,7 @@ export function SplitFlow({ embedded = false, focus, panelOnly = false }: { embe
               setNext(lead.id, "Follow up on decision", at);
               setNextAction("Follow up on decision");
               setDue(at.slice(0, 16));
+              triggerSaved();
               toast.success("Follow-up set for 2 hours");
             }}>
               <BellRing className="mr-1 h-3 w-3" />Follow
@@ -412,7 +436,7 @@ export function SplitFlow({ embedded = false, focus, panelOnly = false }: { embe
             </select>
             <Input type="datetime-local" className="h-7 w-[8.8rem] shrink-0 text-[10px]" value={due} onChange={(e) => setDue(e.target.value)} />
             <Button size="sm" variant="secondary" className="h-7 shrink-0 px-2 text-[10px]"
-              onClick={() => { setNext(lead.id, nextAction, new Date(due).toISOString()); toast.success("Next step and deadline locked"); }}>
+              onClick={() => { setNext(lead.id, nextAction, new Date(due).toISOString()); triggerSaved(); toast.success("Next step and deadline locked"); }}>
               Lock
             </Button>
           </div>
@@ -444,6 +468,7 @@ export function SplitFlow({ embedded = false, focus, panelOnly = false }: { embe
                     logActivity(lead.id, activityType, activityNote);
                     setActivityNote("");
                     setActivityOpen(false);
+                    triggerSaved();
                     toast.success("Activity added to the customer story");
                   }
                 }} />
@@ -455,6 +480,7 @@ export function SplitFlow({ embedded = false, focus, panelOnly = false }: { embe
                 logActivity(lead.id, activityType, activityNote);
                 setActivityNote("");
                 setActivityOpen(false);
+                triggerSaved();
                 toast.success("Activity added to the customer story");
               }}>Save activity</Button>
             </DialogFooter>
